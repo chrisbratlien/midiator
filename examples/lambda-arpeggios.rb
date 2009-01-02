@@ -9,7 +9,8 @@ midi.autodetect_driver
 
 include MIDIator::Notes
 
-def perform(root_note,scale,chord,progression,player)
+def perform(root_note,scale,chord,progression,player, comment ='')
+  puts "performing #{root_note.name} #{scale} #{chord} #{progression.join(',')} #{comment}\n"
   chords = progression.map{ |degree| root_note.send(scale).harmonized_chord(degree,chord) }
   chords.each{|chord| player[chord] }
   sleep(1)
@@ -45,8 +46,19 @@ clifton = L {|chord|
  ending = [8,4,1,7,8]
  prog = intro + part_a + part_b + part_c + ending
 
+players = [george,tony,clifton,peggy]
+
 perform(Note.new("C"), :phrygian_scale, :min7_chord, prog,tony)
-
 perform(Note.new(54), :mixolydian_scale, :eleventh_chord, prog,clifton)
-
 perform(Note.new("C"), :major_scale, :maj7_chord, prog,peggy)
+
+
+2.times {
+	cbnote = Note.new(rand(20) + 40)
+	scale_method = Note.random_scale_method
+	chord_method = cbnote.send(scale_method).valid_chord_names_for_degree(1).pick
+	perform(cbnote,scale_method,chord_method,prog,players.pick)
+}
+
+#shush
+(0..127).each{|n| midi.driver.note_off(n,0,0) }
