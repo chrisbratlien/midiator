@@ -6,6 +6,9 @@ require 'cb-music-theory' #git clone git://github.com/chrisbratlien/cb-music-the
  
 midi = MIDIator::Interface.new
 midi.autodetect_driver
+#midi = MIDIator::Interface.new
+#midi.use :dls_synth
+
 
 include MIDIator::Notes
 
@@ -32,7 +35,7 @@ def bend_note(midi,start,finish,sd=0.2,bd=0.1,fd=0.7)
 	w_stop = { -2 => 0, -1 => 4096, 0 => 8192, 1 => 12288, 2 => 16383}[st]
 	tot_w = w_stop - w_start
 	tot_dur = bd	
-	bend_steps = 200
+	bend_steps = 20
 	bend_dx = tot_w/bend_steps
 	dur_dx = tot_dur / bend_steps
 	w_start.step(w_stop,bend_dx) { |x|
@@ -165,7 +168,7 @@ prog = [1,4,5,2,8,4,8,4,9,7,2,5,1,3,6,9,5,7,2,5,6,2,7,5,8,4,1,7,8]
 
 #perform(Note.new("C"), :phrygian_scale, :min7_chord, prog,tony)
 #perform(Note.new(54), :mixolydian_scale, :eleventh_chord, prog,clifton)
-#perform(Note.new("F"), :major_scale, :maj9_chord, prog,peggy)
+perform(Note.new("F"), :major_scale, :maj9_chord, prog,peggy)
 
 #perform(Note.new("F"), :major_scale, :maj9_chord, prog,hammett_bend) #zzz doesn't work yet, don't know how to pitch bend yet
 #perform(Note.new("F"), :major_scale, :maj9_chord, prog,inward_a)
