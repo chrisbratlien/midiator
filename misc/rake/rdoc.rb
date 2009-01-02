@@ -20,8 +20,8 @@ require 'rake/rdoctask'
 # require 'darkfish-rdoc'
 
 # uncomment for hanna!
-gem 'mislav-hanna'
-require 'hanna'
+#gem 'mislav-hanna'
+#require 'hanna'
 
 ### Task: rdoc
 Rake::RDocTask.new do |rdoc|
