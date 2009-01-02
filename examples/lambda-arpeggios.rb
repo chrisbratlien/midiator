@@ -10,13 +10,40 @@ midi.autodetect_driver
 include MIDIator::Notes
 
 def perform(root_note, scale_name, chord_name, progression, player, comment ='')
-  puts "performing #{root_note.name} #{scale_name} #{chord_name} #{progression.join(',')} #{comment}\n"
+  puts "perform: harmonizing the #{root_note.name} #{scale_name} with the #{chord_name} on the progression #{progression.join(',')} #{comment}\n"
   progression.each{ |degree| 
     puts "playing chord on degree #{degree} "
     chord = root_note.send(scale_name).harmonized_chord(degree,chord_name)
     [player].flatten.pick[chord.note_values]  #picking a player lambda and then invoking it 
   }
   sleep(2)
+end
+
+def bend_note(midi,start,finish,sd=0.2,bd=0.1,fd=0.7)
+  st = finish - start
+
+  my_note = start
+		
+  midi.driver.pitch_bend(1,8192) #return to center
+  midi.driver.note_on(my_note,1,100)
+  sleep(sd)
+
+	w_start = 8192  #center #16383 - up 100% #0 down 100%
+	w_stop = { -2 => 0, -1 => 4096, 0 => 8192, 1 => 12288, 2 => 16383}[st]
+	tot_w = w_stop - w_start
+	tot_dur = bd	
+	bend_steps = 200
+	bend_dx = tot_w/bend_steps
+	dur_dx = tot_dur / bend_steps
+	w_start.step(w_stop,bend_dx) { |x|
+		midi.driver.pitch_bend(1,x)
+		sleep(dur_dx)
+	}
+
+  sleep(fd)	
+  midi.driver.note_off(my_note,1,0)
+  midi.driver.pitch_bend(1,8192) #return to center
+
 end
 
 peggy = L { |notes| 
@@ -35,23 +62,10 @@ hammett_down = L { |notes|
 }
 
 hammett_bend = L { |notes|
-#FIXME: can't seem to get pitch bends working
-  bend_distance = notes.first - notes.last
-  # n,c,v
-  midi.driver.note_on(notes.last,1,100)
-
-(0..100).each{|i| 
-   midi.driver.bend(1,i*30000)
-    puts i
-    sleep(0.01)
-  }
-  
-  sleep(0.1)
-  #n,c,v
-  midi.driver.note_off(notes.last,1,0)
-  
+  # not yet an ideal bend.  right now bend_note can only handle a +/- 2 semitone bend, and that doesn't
+  # jibe with the distances between most chord intervals.
+  bend_note(midi,notes.first,notes.first - 2)
 }
-
 
 bassguy1 = L { |notes| 
   [[0,0.4],[1,0.2],[0,0.2]].each{|i,dur| midi.play notes[i], dur}
@@ -143,17 +157,17 @@ puts
 puts
 puts "first, a few canned examples"
 
-players = [george,tony,clifton,peggy,hammett_up,hammett_down,calmer,inward_a,inward_b,outward_a,outward_b,bassguy1,bassguy2]
+players = [george,tony,clifton,peggy,hammett_up,hammett_down,hammett_bend,calmer,inward_a,inward_b,outward_a,outward_b,bassguy1,bassguy2]
 
 
 # chord progression
 prog = [1,4,5,2,8,4,8,4,9,7,2,5,1,3,6,9,5,7,2,5,6,2,7,5,8,4,1,7,8]
 
-perform(Note.new("C"), :phrygian_scale, :min7_chord, prog,tony)
-perform(Note.new(54), :mixolydian_scale, :eleventh_chord, prog,clifton)
-perform(Note.new("F"), :major_scale, :maj9_chord, prog,peggy)
+#perform(Note.new("C"), :phrygian_scale, :min7_chord, prog,tony)
+#perform(Note.new(54), :mixolydian_scale, :eleventh_chord, prog,clifton)
+#perform(Note.new("F"), :major_scale, :maj9_chord, prog,peggy)
 
-#perform(Note.new("F"), :major_scale, :maj9_chord, prog,hammett_bend) zzz doesn't work yet, don't know how to pitch bend yet
+#perform(Note.new("F"), :major_scale, :maj9_chord, prog,hammett_bend) #zzz doesn't work yet, don't know how to pitch bend yet
 #perform(Note.new("F"), :major_scale, :maj9_chord, prog,inward_a)
 #perform(Note.new("F"), :major_scale, :maj9_chord, prog,inward_b)
 #perform(Note.new("F"), :major_scale, :maj9_chord, prog,outward_a)
