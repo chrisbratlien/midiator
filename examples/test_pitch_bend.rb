@@ -62,22 +62,28 @@ midi.autodetect_driver
 include MIDIator::Notes
 
 
-puts "(I'm only testing a msb range of 0x7f - 0x70)"
 puts "Test #1: Call midi.driver.message(0xe0, lsb, msb) where lsb and msb each can be values between 0x00 and 0x7f"
+puts "(I'm only testing a msb range of 0x7f - 0x70)"
 puts "Get ready to start watching MIDI Patchbay (OSX) or MIDI-OX (Windows) for Pitch Bend events"
 puts "Test begins in 5 seconds"
 sleep(5)
 
 wink = 0.0025
+midi.driver.note_on(60,0,100)
+midi.driver.note_on(64,0,100)
+midi.driver.note_on(67,0,100)
 
-0x7F.downto(0x00) { |lsb|
-  0x7F.downto(0x70) { |msb|
+0x7F.downto(0x00) { |val|
     puts "--------------"
-    puts "lsb: #{lsb.to_s(16)} msb: #{msb.to_s(16)}" 
-    midi.driver.message(MIDIator::Driver::PB | 0x00, lsb, msb)
+    puts "val: #{val.to_s(16)}" 
+    midi.driver.message(MIDIator::Driver::PB | 0x00, val, val)
     sleep(wink)    
-    }
 }
+
+midi.driver.note_off(60,0,0)
+midi.driver.note_off(64,0,0)
+midi.driver.note_off(67,0,0)
+
 
 puts "---------------"
 puts " FIRST TEST COMPLETE"
@@ -88,14 +94,22 @@ puts "Get ready to start watching MIDI Patchbay (OSX) or MIDI-OX (Windows) for P
 puts "Test begins in 5 seconds"
 sleep(5)
 
+midi.driver.note_on(60,0,100)
+midi.driver.note_on(64,0,100)
+midi.driver.note_on(67,0,100)
+
 0x7F.downto(0x00) { |val|
   puts "--------------"
   puts "val: #{val.to_s(16)}" 
-  midi.driver.pitch_bend(0,val)
+  midi.driver.pitch_bend(0,val <<8)
   sleep(wink)    
   }
+midi.driver.note_off(60,0,0)
+midi.driver.note_off(64,0,0)
+midi.driver.note_off(67,0,0)
 
-
+#hush
+(0..127).each{|n| midi.driver.note_off(n,0,0) }
 #scale = [ C4, D4, E4, F4, G4, A4, B4, C5 ]
 
 #scale.each do |note|
