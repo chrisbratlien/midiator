@@ -27,25 +27,25 @@ def bend_note(midi,start,finish,sd=0.2,bd=0.1,fd=0.7)
 
   my_note = start
 		
-  midi.driver.pitch_bend(1,8192) #return to center
+  midi.driver.pitch_bend(1,64 << 8) #return to center
   midi.driver.note_on(my_note,1,100)
   sleep(sd)
 
-	w_start = 8192  #center #16383 - up 100% #0 down 100%
-	w_stop = { -2 => 0, -1 => 4096, 0 => 8192, 1 => 12288, 2 => 16383}[st]
+	w_start = 64
+	w_stop = { -2 => 0, -1 => 32, 0 => 64, 1 =>96, 2 => 127}[st]
 	tot_w = w_stop - w_start
 	tot_dur = bd	
 	bend_steps = 20
 	bend_dx = tot_w/bend_steps
 	dur_dx = tot_dur / bend_steps
 	w_start.step(w_stop,bend_dx) { |x|
-		midi.driver.pitch_bend(1,x)
+		midi.driver.pitch_bend(1,x << 8)
 		sleep(dur_dx)
 	}
 
   sleep(fd)	
   midi.driver.note_off(my_note,1,0)
-  midi.driver.pitch_bend(1,8192) #return to center
+  midi.driver.pitch_bend(1,64 << 8) #return to center
 
 end
 
