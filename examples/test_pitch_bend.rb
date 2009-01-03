@@ -18,6 +18,10 @@ require 'rubygems'
 require 'midiator'
 
 def bend_note(midi,start,finish,sd=0.2,bd=0.1,fd=0.7)
+  #I'm not sure this function is calling midi.driver.pitch_bend in the author's
+  #intended way.  I'm a little confused by the bitwise shifting around that I
+  #thought, or maybe still think, I needed in here.
+  
   st = finish - start
 
   my_note = start
@@ -50,20 +54,55 @@ midi = MIDIator::Interface.new
 
 
 midi.autodetect_driver
-midi.instruct_user!
+#midi.instruct_user!
 
 #midi.use :dls_synth
 
 
 include MIDIator::Notes
 
-scale = [ C4, D4, E4, F4, G4, A4, B4, C5 ]
 
-scale.each do |note|
-	#midi.play note
-	bend_note(midi,note,note-2)
-end
+puts "(I'm only testing a msb range of 0x7f - 0x70)"
+puts "Test #1: Call midi.driver.message(0xe0, lsb, msb) where lsb and msb each can be values between 0x00 and 0x7f"
+puts "Get ready to start watching MIDI Patchbay (OSX) or MIDI-OX (Windows) for Pitch Bend events"
+puts "Test begins in 5 seconds"
+sleep(5)
 
-scale.reverse.each do |note|
-	bend_note(midi,note,note+2)
-end
+wink = 0.0025
+
+0x7F.downto(0x00) { |lsb|
+  0x7F.downto(0x70) { |msb|
+    puts "--------------"
+    puts "lsb: #{lsb.to_s(16)} msb: #{msb.to_s(16)}" 
+    midi.driver.message(MIDIator::Driver::PB | 0x00, lsb, msb)
+    sleep(wink)    
+    }
+}
+
+puts "---------------"
+puts " FIRST TEST COMPLETE"
+puts "------------------"
+
+puts "Test #2: Try making some calls to midi.driver.pitch_bend(1,x) where x is 0x00 - 0x7F"
+puts "Get ready to start watching MIDI Patchbay (OSX) or MIDI-OX (Windows) for Pitch Bend events"
+puts "Test begins in 5 seconds"
+sleep(5)
+
+0x7F.downto(0x00) { |val|
+  puts "--------------"
+  puts "val: #{val.to_s(16)}" 
+  midi.driver.pitch_bend(0,val)
+  sleep(wink)    
+  }
+
+
+#scale = [ C4, D4, E4, F4, G4, A4, B4, C5 ]
+
+#scale.each do |note|
+#	#midi.play note
+#	bend_note(midi,note,note-2)
+#end
+
+#scale.reverse.each do |note|
+#	bend_note(midi,note,note+2)
+#end
