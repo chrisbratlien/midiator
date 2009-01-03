@@ -29,7 +29,7 @@ include MIDIator::Notes
 
 wink = 0.0025
 
-if midi.driver.class == MIDIator::Driver::DLSSynth
+if midi.driver.class.to_s == "MIDIator::Driver::DLSSynth"
   puts "dls_synth found, skipping test #1"
 else  
   puts "Test #1: Call midi.driver.message(0xe0, lsb, msb) where lsb and msb each can be values between 0x00 and 0x7f"
