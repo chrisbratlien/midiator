@@ -22,32 +22,31 @@ def perform(root_note, scale_name, chord_name, progression, player, comment ='')
   sleep(2)
 end
 
-def bend_note(midi,start,finish,sd=0.2,bd=0.1,fd=0.7)
+def bend_note(midi,start,finish,sd=0.2,bd=0.1,fd=0.7)  
   st = finish - start
-
   my_note = start
 		
-  midi.driver.pitch_bend(1,64 << 8) #return to center
-  midi.driver.note_on(my_note,1,100)
+  midi.driver.pitch_bend(0,0x3f) #return to center
+  midi.driver.note_on(my_note,0,100)
   sleep(sd)
 
 	w_start = 64
-	w_stop = { -2 => 0, -1 => 32, 0 => 64, 1 =>96, 2 => 127}[st]
+	w_stop = { -2 => 0x00, -1 => 0x1f, 0 => 0x3f, 1 =>0x5f, 2 => 0x7f}[st]
 	tot_w = w_stop - w_start
 	tot_dur = bd	
 	bend_steps = 20
 	bend_dx = tot_w/bend_steps
 	dur_dx = tot_dur / bend_steps
 	w_start.step(w_stop,bend_dx) { |x|
-		midi.driver.pitch_bend(1,x << 8)
+		midi.driver.pitch_bend(0,x)
 		sleep(dur_dx)
 	}
 
   sleep(fd)	
-  midi.driver.note_off(my_note,1,0)
-  midi.driver.pitch_bend(1,64 << 8) #return to center
-
+  midi.driver.note_off(my_note,0,0)
+  midi.driver.pitch_bend(0,0x3f) #return to center
 end
+
 
 peggy = L { |notes| 
   #peggy likes to play arpeggios
@@ -178,6 +177,7 @@ perform(Note.new("F"), :major_scale, :maj9_chord, prog,peggy)
   
   
 puts "now... time for some gambling with your ears"
+puts "(Polyphonic modules sound better)"
 50.times {
 	note = Note.new(rand(20) + 40)
 	scale_method = Note.random_scale_method

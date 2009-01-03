@@ -109,7 +109,7 @@ class MIDIator::Driver
 
 	### Shortcut to send a pitch bend message.
 	def pitch_bend( channel, value )
-		message( PB | channel, value )
+		message( PB | channel, value, value )
 	end
 	alias bend pitch_bend
 

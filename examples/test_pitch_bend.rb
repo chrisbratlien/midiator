@@ -17,91 +17,55 @@
 require 'rubygems'
 require 'midiator'
 
-def bend_note(midi,start,finish,sd=0.2,bd=0.1,fd=0.7)
-  #I'm not sure this function is calling midi.driver.pitch_bend in the author's
-  #intended way.  I'm a little confused by the bitwise shifting around that I
-  #thought, or maybe still think, I needed in here.
-  
-  st = finish - start
-
-  my_note = start
-		
-  midi.driver.pitch_bend(1,64 << 8) #return to center
-  midi.driver.note_on(my_note,1,100)
-  sleep(sd)
-
-	w_start = 64
-	w_stop = { -2 => 0, -1 => 32, 0 => 64, 1 =>96, 2 => 127}[st]
-	tot_w = w_stop - w_start
-	tot_dur = bd	
-	bend_steps = 20
-	bend_dx = tot_w/bend_steps
-	dur_dx = tot_dur / bend_steps
-	w_start.step(w_stop,bend_dx) { |x|
-		midi.driver.pitch_bend(1,x << 8)
-		sleep(dur_dx)
-	}
-
-  sleep(fd)	
-  midi.driver.note_off(my_note,1,0)
-  midi.driver.pitch_bend(1,64 << 8) #return to center
-
-end
-
-
-
 midi = MIDIator::Interface.new
 
 
 midi.autodetect_driver
 #midi.instruct_user!
-
 #midi.use :dls_synth
 
 
 include MIDIator::Notes
 
-
-puts "Test #1: Call midi.driver.message(0xe0, lsb, msb) where lsb and msb each can be values between 0x00 and 0x7f"
-puts "(I'm only testing a msb range of 0x7f - 0x70)"
-puts "Get ready to start watching MIDI Patchbay (OSX) or MIDI-OX (Windows) for Pitch Bend events"
-puts "Test begins in 5 seconds"
-sleep(5)
-
 wink = 0.0025
+
+if midi.driver.class == MIDIator::Driver::DLSSynth
+  puts "dls_synth found, skipping test #1"
+else  
+  puts "Test #1: Call midi.driver.message(0xe0, lsb, msb) where lsb and msb each can be values between 0x00 and 0x7f"
+  puts "Hook up to o sound module and listen to the following Notes.  You should hear a pitch bend."
+  sleep(2)
+
+  midi.driver.note_on(60,0,100)
+  midi.driver.note_on(64,0,100)
+  midi.driver.note_on(67,0,100)
+
+  0x7F.downto(0x00) { |val|
+      #puts "val: #{val.to_s(16)}" 
+      midi.driver.message(MIDIator::Driver::PB | 0x00, val, val)
+      sleep(wink)    
+  }
+
+  midi.driver.note_off(60,0,0)
+  midi.driver.note_off(64,0,0)
+  midi.driver.note_off(67,0,0)
+end
+
+
+puts
+puts
+puts
+puts "Test #2: Try making some calls to midi.driver.pitch_bend(channel,x) where x is 0x00 - 0x7F"
+puts "This test wouldn't bend until I modified driver.rb"
+sleep(2)
+
 midi.driver.note_on(60,0,100)
 midi.driver.note_on(64,0,100)
 midi.driver.note_on(67,0,100)
 
 0x7F.downto(0x00) { |val|
-    puts "--------------"
-    puts "val: #{val.to_s(16)}" 
-    midi.driver.message(MIDIator::Driver::PB | 0x00, val, val)
-    sleep(wink)    
-}
-
-midi.driver.note_off(60,0,0)
-midi.driver.note_off(64,0,0)
-midi.driver.note_off(67,0,0)
-
-
-puts "---------------"
-puts " FIRST TEST COMPLETE"
-puts "------------------"
-
-puts "Test #2: Try making some calls to midi.driver.pitch_bend(1,x) where x is 0x00 - 0x7F"
-puts "Get ready to start watching MIDI Patchbay (OSX) or MIDI-OX (Windows) for Pitch Bend events"
-puts "Test begins in 5 seconds"
-sleep(5)
-
-midi.driver.note_on(60,0,100)
-midi.driver.note_on(64,0,100)
-midi.driver.note_on(67,0,100)
-
-0x7F.downto(0x00) { |val|
-  puts "--------------"
-  puts "val: #{val.to_s(16)}" 
-  midi.driver.pitch_bend(0,val <<8)
+  #puts "val: #{val.to_s(16)}" 
+  midi.driver.pitch_bend(0,val)
   sleep(wink)    
   }
 midi.driver.note_off(60,0,0)
@@ -110,13 +74,3 @@ midi.driver.note_off(67,0,0)
 
 #hush
 (0..127).each{|n| midi.driver.note_off(n,0,0) }
-#scale = [ C4, D4, E4, F4, G4, A4, B4, C5 ]
-
-#scale.each do |note|
-#	#midi.play note
-#	bend_note(midi,note,note-2)
-#end
-
-#scale.reverse.each do |note|
-#	bend_note(midi,note,note+2)
-#end
